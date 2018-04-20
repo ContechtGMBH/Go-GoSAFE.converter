@@ -53,10 +53,34 @@ type TrackEdge struct {
 	MacroscopicNode []MacroscopicNode
 }
 
+type SwitchOrCrossing struct { // exactly the same attrs
+	Id                  string `xml:"id,attr"`
+	Code                string `xml:"code,attr,omitempty"`
+	Name                string `xml:"name,attr,omitempty"`
+	Description         string `xml:"description,attr,omitempty"`
+	Pos                 string `xml:"pos,attr,omitempty"`
+	AbsPos              string `xml:"absPos,attr,omitempty"`
+	OcpStationRef       string `xml:"ocpStationRef,attr,omitempty"`
+	ControllerRef       string `xml:"controllerRef,attr,omitempty"`
+	TrackContinueCourse string `xml:"trackContinueCourse,attr,omitempty"`
+	TrackContinueRadius string `xml:"trackContinueRadius,attr,omitempty"`
+	NormalPosition      string `xml:"normalPosition,attr,omitempty"`
+	Model               string `xml:"model,attr,omitempty"`
+	Length              string `xml:"length,attr,omitempty"`
+	Type                string `xml:"type,attr,omitempty"`
+	Connection          Connection
+}
+
+type Connections struct {
+	XMLName     xml.Name `xml:"connections"`
+	Connections []SwitchOrCrossing
+}
+
 type TrackTopology struct {
-	XMLName    xml.Name `xml:"trackTopology"`
-	TrackBegin TrackEdge
-	TrackEnd   TrackEdge
+	XMLName     xml.Name `xml:"trackTopology"`
+	TrackBegin  TrackEdge
+	TrackEnd    TrackEdge
+	Connections Connections
 }
 
 type AxleWeightChange struct {
@@ -411,11 +435,159 @@ type TrackElements struct {
 	Tunnels                  *Tunnels
 }
 
+type Signal struct {
+	XMLName       xml.Name `xml:"signal"`
+	Id            string   `xml:"id,attr"`
+	Code          string   `xml:"code,attr,omitempty"`
+	Name          string   `xml:"name,attr,omitempty"`
+	Description   string   `xml:"description,attr,omitempty"`
+	Pos           string   `xml:"pos,attr,omitempty"`
+	AbsPos        string   `xml:"absPos,attr,omitempty"`
+	Dir           string   `xml:"dir,attr,omitempty"`
+	OcpStationRef string   `xml:"ocpStationRef,attr,omitempty"`
+	ControllerRef string   `xml:"controllerRef,attr,omitempty"`
+	Type          string   `xml:"type,attr,omitempty"`
+	Function      string   `xml:"function,attr,omitempty"`
+	Virtual       string   `xml:"virtual,attr,omitempty"`
+	RuleCode      string   `xml:"ruleCode,attr,omitempty"`
+	TrackDist     string   `xml:"trackDist,attr,omitempty"`
+	Height        string   `xml:"height,attr,omitempty"`
+}
+
+type Signals struct {
+	XMLName xml.Name `xml:"signals"`
+	Signal  []Signal
+}
+
+// TrainDetectionElements skipped for now
+
+type Balise struct {
+	XMLName                xml.Name `xml:"balise"`
+	Id                     string   `xml:"id,attr"`
+	Code                   string   `xml:"code,attr,omitempty"`
+	Name                   string   `xml:"name,attr,omitempty"`
+	Description            string   `xml:"description,attr,omitempty"`
+	Pos                    string   `xml:"pos,attr,omitempty"`
+	AbsPos                 string   `xml:"absPos,attr,omitempty"`
+	Dir                    string   `xml:"dir,attr,omitempty"`
+	CountryID              string   `xml:"countryID,attr,omitempty"`
+	GroupID                string   `xml:"groupID,attr,omitempty"`
+	LinkingAccuracy        string   `xml:"linkingAccuracy,attr,omitempty"`
+	LinkReactionAscending  string   `xml:"linkReactionAscending,attr,omitempty"`
+	LinkReactionDescending string   `xml:"linkReactionDescending,attr,omitempty"`
+	StaticTelegram         string   `xml:"staticTelegram,attr,omitempty"`
+	Ndx                    string   `xml:"ndx,attr,omitempty"`
+}
+
+type Balises struct {
+	XMLName xml.Name `xml:"balises"`
+	Balise  []Balise
+}
+
+type TrainProtectionElement struct {
+	XMLName               xml.Name `xml:"trainProtectionElement"`
+	Id                    string   `xml:"id,attr"`
+	Code                  string   `xml:"code,attr,omitempty"`
+	Name                  string   `xml:"name,attr,omitempty"`
+	Description           string   `xml:"description,attr,omitempty"`
+	Pos                   string   `xml:"pos,attr,omitempty"`
+	AbsPos                string   `xml:"absPos,attr,omitempty"`
+	Dir                   string   `xml:"dir,attr,omitempty"`
+	Medium                string   `xml:"medium,attr,omitempty"`
+	System                string   `xml:"system,attr,omitempty"`
+	TrainProtectionSystem string   `xml:"trainProtectionSystem,attr,omitempty"`
+	Model                 string   `xml:"model,attr,omitempty"`
+}
+
+type TrainProtectionElements struct {
+	XMLName                xml.Name `xml:"trainProtectionElements"`
+	TrainProtectionElement []TrainProtectionElement
+}
+
+type StopPost struct {
+	XMLName           xml.Name `xml:"stopPost"`
+	Id                string   `xml:"id,attr"`
+	Code              string   `xml:"code,attr,omitempty"`
+	Name              string   `xml:"name,attr,omitempty"`
+	Description       string   `xml:"description,attr,omitempty"`
+	Pos               string   `xml:"pos,attr,omitempty"`
+	AbsPos            string   `xml:"absPos,attr,omitempty"`
+	Dir               string   `xml:"dir,attr,omitempty"`
+	RuleCode          string   `xml:"ruleCode,attr,omitempty"`
+	TrainRelation     string   `xml:"trainRelation,attr,omitempty"`
+	PlatformEdgeRef   string   `xml:"platformEdgeRef,attr,omitempty"`
+	TrainLength       string   `xml:"trainLength,attr,omitempty"`
+	AxleCount         string   `xml:"axleCoount,attr,omitempty"`
+	WagonCount        string   `xml:"wagonCount,attr,omitempty"`
+	VerbalConstraints string   `xml:"verbalConstraints,attr,omitempty"`
+	Virtual           string   `xml:"virtual,attr,omitempty"`
+	OcpRef            string   `xml:"ocpRef,attr,omitempty"`
+}
+
+type StopPosts struct {
+	XMLName  xml.Name `xml:"stopPosts"`
+	StopPost []StopPost
+}
+
+type Derailer struct {
+	XMLName     xml.Name `xml:"derailer"`
+	Id          string   `xml:"id,attr"`
+	Code        string   `xml:"code,attr,omitempty"`
+	Name        string   `xml:"name,attr,omitempty"`
+	Description string   `xml:"description,attr,omitempty"`
+	Pos         string   `xml:"pos,attr,omitempty"`
+	AbsPos      string   `xml:"absPos,attr,omitempty"`
+	Dir         string   `xml:"dir,attr,omitempty"`
+	RuleCode    string   `xml:"ruleCode,attr,omitempty"`
+	DerailSide  string   `xml:"derailSide,attr,omitempty"`
+	Kind        string   `xml:"kind,attr,omitempty"`
+	Model       string   `xml:"model,attr,omitempty"`
+}
+
+type Derailers struct {
+	XMLName  xml.Name `xml:"derailers"`
+	Derailer []Derailer
+}
+
+type TrainRadioChange struct {
+	XMLName              xml.Name `xml:"trainRadioChange"`
+	Id                   string   `xml:"id,attr"`
+	Code                 string   `xml:"code,attr,omitempty"`
+	Name                 string   `xml:"name,attr,omitempty"`
+	Description          string   `xml:"description,attr,omitempty"`
+	Pos                  string   `xml:"pos,attr,omitempty"`
+	AbsPos               string   `xml:"absPos,attr,omitempty"`
+	Dir                  string   `xml:"dir,attr,omitempty"`
+	RadioSystem          string   `xml:"radioSystem,attr,omitempty"`
+	NetworkSelection     string   `xml:"networkSelection,attr,omitempty"`
+	PublicEmergency      string   `xml:"publicEmergency,attr,omitempty"`
+	BroadcastCalls       string   `xml:"broadcastCalls,attr,omitempty"`
+	TextMessageService   string   `xml:"textMessageService,attr,omitempty"`
+	DirectMode           string   `xml:"directMode,attr,omitempty"`
+	PublicNetworkRoaming string   `xml:"publicNetworkRoaming,attr,omitempty"`
+}
+
+type TrainRadioChanges struct {
+	XMLName          xml.Name `xml:"trainRadioChanges"`
+	TrainRadioChange []TrainRadioChange
+}
+
+type OcsElements struct {
+	XMLName                 xml.Name `xml:"ocsElements"`
+	Signals                 *Signals
+	Balises                 *Balises
+	TrainProtectionElements *TrainProtectionElements
+	StopPosts               *StopPosts
+	Derailers               *Derailers
+	TrainRadioChanges       *TrainRadioChanges
+}
+
 type Track struct {
 	XMLName       xml.Name `xml:"track"`
 	Id            string   `xml:"id,attr"`
 	TrackTopology TrackTopology
 	TrackElements TrackElements
+	OcsElements   OcsElements
 }
 
 type Tracks struct {
@@ -513,7 +685,7 @@ type UnmarshalledTrack struct {
 
 func ExportTrack(id string) Track {
 	db := config.GetDBConnection()
-	query := "MATCH (t:Track {id:{trackId}})-[r:BEGINS|ENDS|HAS_TRACK_ELEMENT]-(n) RETURN t,r,n,labels(n)"
+	query := "MATCH (t:Track {id:{trackId}})-[r:BEGINS|ENDS|HAS_TRACK_ELEMENT|HAS_OCS_ELEMENT]-(n) RETURN t,r,n,labels(n)"
 	track := []UnmarshalledTrack{}
 	cq := neoism.CypherQuery{
 		Statement:  query,
@@ -527,6 +699,7 @@ func ExportTrack(id string) Track {
 	xtb := TrackEdge{XMLName: xml.Name{Local: "trackBegin"}}
 	xte := TrackEdge{XMLName: xml.Name{Local: "trackEnd"}}
 	xtel := TrackElements{}
+	xoel := OcsElements{}
 
 	for _, t := range track {
 		if len(t.Label) < 1 {
@@ -541,10 +714,12 @@ func ExportTrack(id string) Track {
 			createTrackEdge(lb, &xte, t)
 		case "HAS_TRACK_ELEMENT":
 			createTrackElement(lb, &xtel, t)
+		case "HAS_OCS_ELEMENT":
+			createOcsElement(lb, &xoel, t)
 		}
 	}
 	xtt := TrackTopology{TrackBegin: xtb, TrackEnd: xte}
-	xt := Track{Id: id, TrackTopology: xtt, TrackElements: xtel}
+	xt := Track{Id: id, TrackTopology: xtt, TrackElements: xtel, OcsElements: xoel}
 	/*
 		output, err := xml.MarshalIndent(xt, "  ", "    ")
 		if err != nil {
@@ -585,6 +760,13 @@ func createTrackEdge(lb string, xteg *TrackEdge, t UnmarshalledTrack) {
 		)
 	}
 }
+
+/*
+createConnection(lb string, xteg *TrackEdge, t UnmarshalledTrack){
+	switch lb {
+	case "Switch":
+	}
+}*/
 
 // TRACK ELEMENTS
 func createTrackElement(lb string, xtel *TrackElements, t UnmarshalledTrack) {
@@ -741,6 +923,66 @@ func createTrackElement(lb string, xtel *TrackElements, t UnmarshalledTrack) {
 		xtel.Tunnels.Tunnel = append(
 			xtel.Tunnels.Tunnel,
 			*createElementFromNode(&t.Node, nt).(*Tunnel),
+		)
+	}
+}
+
+// OCS Elements
+func createOcsElement(lb string, xoel *OcsElements, t UnmarshalledTrack) {
+	switch lb {
+	case "Signal":
+		if xoel.Signals == nil {
+			xoel.Signals = &Signals{}
+		}
+		ns := &Signal{}
+		xoel.Signals.Signal = append(
+			xoel.Signals.Signal,
+			*createElementFromNode(&t.Node, ns).(*Signal),
+		)
+	case "Balise":
+		if xoel.Balises == nil {
+			xoel.Balises = &Balises{}
+		}
+		nb := &Balise{}
+		xoel.Balises.Balise = append(
+			xoel.Balises.Balise,
+			*createElementFromNode(&t.Node, nb).(*Balise),
+		)
+	case "TrainProtectionElement":
+		if xoel.TrainProtectionElements == nil {
+			xoel.TrainProtectionElements = &TrainProtectionElements{}
+		}
+		ntpe := &TrainProtectionElement{}
+		xoel.TrainProtectionElements.TrainProtectionElement = append(
+			xoel.TrainProtectionElements.TrainProtectionElement,
+			*createElementFromNode(&t.Node, ntpe).(*TrainProtectionElement),
+		)
+	case "StopPost":
+		if xoel.StopPosts == nil {
+			xoel.StopPosts = &StopPosts{}
+		}
+		nsp := &StopPost{}
+		xoel.StopPosts.StopPost = append(
+			xoel.StopPosts.StopPost,
+			*createElementFromNode(&t.Node, nsp).(*StopPost),
+		)
+	case "Derailers":
+		if xoel.Derailers == nil {
+			xoel.Derailers = &Derailers{}
+		}
+		nd := &Derailer{}
+		xoel.Derailers.Derailer = append(
+			xoel.Derailers.Derailer,
+			*createElementFromNode(&t.Node, nd).(*Derailer),
+		)
+	case "TrainRadioChange":
+		if xoel.TrainRadioChanges == nil {
+			xoel.TrainRadioChanges = &TrainRadioChanges{}
+		}
+		ntrc := &TrainRadioChange{}
+		xoel.TrainRadioChanges.TrainRadioChange = append(
+			xoel.TrainRadioChanges.TrainRadioChange,
+			*createElementFromNode(&t.Node, ntrc).(*TrainRadioChange),
 		)
 	}
 }
