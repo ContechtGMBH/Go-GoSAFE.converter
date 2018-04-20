@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"Go-GoSAFE.converter/config"
+	"Go-GoSAFE.converter/export"
 	"Go-GoSAFE.converter/graph"
 
 	"github.com/beevik/etree"
@@ -50,4 +51,21 @@ func ConvertRailml(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"response": x,
 	})
+}
+
+func ExportRailml(c *gin.Context) {
+
+	lineId := c.PostForm("line")
+
+	rm := export.ExportLine(lineId)
+	/*
+		output, err := xml.MarshalIndent(rm, "  ", "    ")
+		if err != nil {
+			fmt.Printf("error: %v\n", err)
+		}
+
+		os.Stdout.Write(output)
+	*/
+
+	c.XML(200, rm)
 }

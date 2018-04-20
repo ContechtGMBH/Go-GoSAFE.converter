@@ -12,6 +12,7 @@ func NewRouter() *gin.Engine {
 	v1 := router.Group("api/v1")
 	{
 		v1.POST("/converter/railml", controllers.ConvertRailml)
+		v1.POST("/export/railml", controllers.ExportRailml)
 	}
 
 	return router // listen and serve on 0.0.0.0:8080
