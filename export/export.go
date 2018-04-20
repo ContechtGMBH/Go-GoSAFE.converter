@@ -54,6 +54,7 @@ type TrackEdge struct {
 }
 
 type SwitchOrCrossing struct { // exactly the same attrs
+	XMLName             xml.Name
 	Id                  string `xml:"id,attr"`
 	Code                string `xml:"code,attr,omitempty"`
 	Name                string `xml:"name,attr,omitempty"`
@@ -681,11 +682,12 @@ type UnmarshalledTrack struct {
 	Relationship neoism.Relationship `json:"r"`
 	Node         neoism.Node         `json:"n"`
 	Label        []string            `json:"labels(n)"`
+	Connection   neoism.Node         `json:"c"`
 }
 
 func ExportTrack(id string) Track {
 	db := config.GetDBConnection()
-	query := "MATCH (t:Track {id:{trackId}})-[r:BEGINS|ENDS|HAS_TRACK_ELEMENT|HAS_OCS_ELEMENT]-(n) RETURN t,r,n,labels(n)"
+	query := "MATCH (t:Track {id:{trackId}})-[r:BEGINS|ENDS|HAS_TRACK_ELEMENT|HAS_OCS_ELEMENT|HAS_SWITCH|HAS_CROSSING]-(n)-[:HAS_CONNECTION*0..1]-(c) RETURN t,r,n,labels(n),c"
 	track := []UnmarshalledTrack{}
 	cq := neoism.CypherQuery{
 		Statement:  query,
@@ -698,6 +700,7 @@ func ExportTrack(id string) Track {
 
 	xtb := TrackEdge{XMLName: xml.Name{Local: "trackBegin"}}
 	xte := TrackEdge{XMLName: xml.Name{Local: "trackEnd"}}
+	xc := Connections{}
 	xtel := TrackElements{}
 	xoel := OcsElements{}
 
@@ -716,9 +719,11 @@ func ExportTrack(id string) Track {
 			createTrackElement(lb, &xtel, t)
 		case "HAS_OCS_ELEMENT":
 			createOcsElement(lb, &xoel, t)
+		case "HAS_SWITCH", "HAS_CROSSING":
+			createConnection(lb, &xc, t)
 		}
 	}
-	xtt := TrackTopology{TrackBegin: xtb, TrackEnd: xte}
+	xtt := TrackTopology{TrackBegin: xtb, TrackEnd: xte, Connections: xc}
 	xt := Track{Id: id, TrackTopology: xtt, TrackElements: xtel, OcsElements: xoel}
 	/*
 		output, err := xml.MarshalIndent(xt, "  ", "    ")
@@ -761,12 +766,23 @@ func createTrackEdge(lb string, xteg *TrackEdge, t UnmarshalledTrack) {
 	}
 }
 
-/*
-createConnection(lb string, xteg *TrackEdge, t UnmarshalledTrack){
+// createConnection creates an XML connection node inside switch or crossing parent
+func createConnection(lb string, xc *Connections, t UnmarshalledTrack) {
+	nsc := &SwitchOrCrossing{XMLName: xml.Name{Local: "switch"}}
 	switch lb {
 	case "Switch":
+		nsc.XMLName = xml.Name{Local: "switch"}
+
+	case "Crossing":
+		nsc.XMLName = xml.Name{Local: "crossing"}
 	}
-}*/
+	nco := &Connection{}
+	nsc.Connection = *createElementFromNode(&t.Connection, nco).(*Connection)
+	xc.Connections = append(
+		xc.Connections,
+		*createElementFromNode(&t.Node, nsc).(*SwitchOrCrossing),
+	)
+}
 
 // TRACK ELEMENTS
 func createTrackElement(lb string, xtel *TrackElements, t UnmarshalledTrack) {
