@@ -596,9 +596,99 @@ type Tracks struct {
 	Tracks  []Track
 }
 
+type AxleWeight struct {
+	XMLName   xml.Name `xml:"axleWeight"`
+	Value     string   `xml:"value,attr"`
+	Meterload string   `xml:"meterload,attr"`
+}
+
+type Electrification struct {
+	XMLName   xml.Name `xml:"electrification"`
+	Type      string   `xml:"type,attr"`
+	Voltage   string   `xml:"voltage,attr"`
+	Frequency string   `xml:"frequency,attr"`
+}
+
+type EpsgCode struct {
+	XMLName     xml.Name `xml:"epsgCode"`
+	Default     string   `xml:"default,attr"`
+	ExtraHeight string   `xml:"extraHeight,attr"`
+}
+
+type Gauge struct {
+	XMLName xml.Name `xml:"gauge"`
+	Value   string   `xml:"value,attr"`
+}
+
+type ClearanceGauge struct {
+	XMLName xml.Name `xml:"clearanceGauge"`
+	Code    string   `xml:"code,attr"`
+}
+
+type OperationMode struct {
+	XMLName           xml.Name `xml:"operationMode"`
+	ModeLegislative   string   `xml:"modeLegislative,attr"`
+	ModeExecutive     string   `xml:"modeExecutive,attr"`
+	ClearanceManaging string   `xml:"clereanceManaging,attr"`
+}
+
+type Owner struct {
+	XMLName                  xml.Name `xml:"owner"`
+	OwnerName                string   `xml:"ownerName,attr"`
+	InfrastructureManagerRef string   `xml:"infrastructureManagerRef,attr"`
+}
+
+type PowerTransmission struct {
+	XMLName xml.Name `xml:"powerTransmission"`
+	Type    string   `xml:"type,attr"`
+	Style   string   `xml:"style,attr"`
+}
+
+type Speed struct {
+	XMLName           xml.Name `xml:"speed"`
+	TrainCategory     string   `xml:"trainCategory,attr"`
+	EtcsTrainCategory string   `xml:"etcsTrainCategory,attr"`
+	ProfileRef        string   `xml:"profileRef,attr"`
+	Status            string   `xml:"status,attr"`
+	VMax              string   `xml:"vMax,attr"`
+}
+
+type Speeds struct {
+	XMLName xml.Name `xml:"speeds"`
+	Speed   []Speed
+}
+
+type TrainRadio struct {
+	XMLName              xml.Name `xml:"trainRadio"`
+	RadioSystem          string   `xml:"radioSystem,attr"`
+	NetworkSelection     string   `xml:"networkSelection,attr"`
+	PublicEmergency      string   `xml:"publicEmergency,attr"`
+	BroadcastCalls       string   `xml:"broadcastCalls,attr"`
+	TextMessageService   string   `xml:"textMessageService,attr"`
+	DirectMode           string   `xml:"directMode,attr"`
+	PublicNetworkRoaming string   `xml:"publicNetworkRoaming,attr"`
+}
+
+type TrainProtection struct {
+	XMLName    xml.Name `xml:"trainProtection"`
+	Medium     string   `xml:"medium,attr"`
+	Monitoring string   `xml:"monitoring,attr"`
+}
+
 type InfraAttributes struct {
-	XMLName xml.Name `xml:"infraAttributes"`
-	Id      string   `xml:"id,attr"`
+	XMLName           xml.Name `xml:"infraAttributes"`
+	Id                string   `xml:"id,attr"`
+	Speeds            *Speeds
+	AxleWeight        *AxleWeight
+	Electrification   *Electrification
+	EpsgCode          *EpsgCode
+	Gauge             *Gauge
+	ClearanceGauge    *ClearanceGauge
+	OperationMode     *OperationMode
+	Owner             *Owner
+	PowerTransmission *PowerTransmission
+	TrainRadio        *TrainRadio
+	TrainProtection   *TrainProtection
 }
 
 type InfraAttrGroups struct {
@@ -610,7 +700,7 @@ type Infrastructure struct {
 	XMLName         xml.Name `xml:"infrastructure"`
 	Id              string   `xml:"id,attr"`
 	Name            string   `xml:"name,attr,omitempty"`
-	InfraAttrGroups InfraAttrGroups
+	InfraAttrGroups []InfraAttrGroups
 	Tracks          Tracks
 }
 
@@ -654,10 +744,11 @@ func ExportLine(lineId string) interface{} {
 		ts.Tracks = append(ts.Tracks, v)
 
 	}
+	iag := ExportInfraAttrs(lineId)
 	in := Infrastructure{
 		Id:              lineId + "-" + time.Now().Format("20060102150405"), // UNIX timestamp format
 		Name:            lineId,
-		InfraAttrGroups: InfraAttrGroups{},
+		InfraAttrGroups: iag,
 		Tracks:          ts,
 	}
 	meta := Metadata{
@@ -720,7 +811,9 @@ func ExportTrack(id string) Track {
 		case "HAS_OCS_ELEMENT":
 			createOcsElement(lb, &xoel, t)
 		case "HAS_SWITCH", "HAS_CROSSING":
-			createConnection(lb, &xc, t)
+			if t.Node.Data["id"] != t.Connection.Data["id"] { // weird behaviour query returns track-switch-connection and track-switch-switch - to investigate
+				createConnection(lb, &xc, t)
+			}
 		}
 	}
 	xtt := TrackTopology{TrackBegin: xtb, TrackEnd: xte, Connections: xc}
@@ -734,6 +827,135 @@ func ExportTrack(id string) Track {
 		os.Stdout.Write(output)
 	*/
 	return xt
+}
+
+// <infraAttrGroups />
+type UnmarshalledGroup struct {
+	ID int `json:"ID(g)"`
+}
+
+// <infraAttributes />
+type UnmarshalledInfraAttrs struct {
+	AttrGroup neoism.Node `json:"a"`
+}
+
+// <speeds />, <gauge /> etc.
+type UnmarshalledAttrsGroup struct {
+	Node  neoism.Node `json:"n"`
+	Label []string    `json:"labels(n)"`
+	ID    int         `json:"ID(n)"`
+}
+
+// <speed />
+type UnmarshalledSpeeds struct {
+	Node neoism.Node `json:"s"`
+}
+
+// INFRA ATTR GROUPS
+func ExportInfraAttrs(id string) []InfraAttrGroups {
+	db := config.GetDBConnection()
+	query := "MATCH (l:Line {id:{lineId}})-[r:HAS_ATTR_GROUP]-(g:InfraAttrGroup) RETURN ID(g)"
+	ug := []UnmarshalledGroup{}
+	cq := neoism.CypherQuery{
+		Statement:  query,
+		Parameters: neoism.Props{"lineId": id},
+		Result:     &ug,
+	}
+
+	e := db.Cypher(&cq)
+	_ = e
+
+	xiags := []InfraAttrGroups{} // <infraAttrGroups /> - no idea how much times this section can occur, so it is an array
+	for _, i := range ug {
+		xiag := InfraAttrGroups{}                                                                                   // <infraAttrGroups />
+		query2 := "MATCH (g:InfraAttrGroup)-[r:HAS_INFRA_ATTRS]-(a:InfraAttributes) WHERE ID(g)={groupId} RETURN a" // get all <infraAttributes/> from the given <infraAttrGroups/>
+		uia := []UnmarshalledInfraAttrs{}
+		cq2 := neoism.CypherQuery{
+			Statement:  query2,
+			Parameters: neoism.Props{"groupId": i.ID},
+			Result:     &uia,
+		}
+
+		e := db.Cypher(&cq2)
+		_ = e
+
+		for _, ia := range uia {
+			xia := &InfraAttributes{} // <infraAttributes/>
+
+			iaid := ia.AttrGroup.Data["id"]
+			query3 := "MATCH (a:InfraAttributes {id:{iaid}})-[r:INFRA_ATTR]-(n)  RETURN n, ID(n), labels(n)" // get all groups from the given <infraAttributes/>
+			uag := []UnmarshalledAttrsGroup{}
+			cq3 := neoism.CypherQuery{
+				Statement:  query3,
+				Parameters: neoism.Props{"iaid": iaid},
+				Result:     &uag,
+			}
+			e := db.Cypher(&cq3)
+			_ = e
+
+			for _, j := range uag { // iterate over array of groups
+				switch j.Label[0] { // create group ex. <axleWeight/>, <gauge/> and only the <speeds/> has childs
+				case "AxleWeight":
+					aw := &AxleWeight{}
+					xia.AxleWeight = createElementFromNode(&j.Node, aw).(*AxleWeight)
+				case "Electrification":
+					el := &Electrification{}
+					xia.Electrification = createElementFromNode(&j.Node, el).(*Electrification)
+				case "EpsgCode":
+					ec := &EpsgCode{}
+					xia.EpsgCode = createElementFromNode(&j.Node, ec).(*EpsgCode)
+				case "Gauge":
+					ga := &Gauge{}
+					xia.Gauge = createElementFromNode(&j.Node, ga).(*Gauge)
+				case "ClearanceGauge":
+					cg := &ClearanceGauge{}
+					xia.ClearanceGauge = createElementFromNode(&j.Node, cg).(*ClearanceGauge)
+				case "OperationMode":
+					om := &OperationMode{}
+					xia.OperationMode = createElementFromNode(&j.Node, om).(*OperationMode)
+				case "Owner":
+					ow := &Owner{}
+					xia.Owner = createElementFromNode(&j.Node, ow).(*Owner)
+				case "PowerTransmission":
+					pt := &PowerTransmission{}
+					xia.PowerTransmission = createElementFromNode(&j.Node, pt).(*PowerTransmission)
+				case "Speeds":
+					ns := &Speeds{}                                                            // <speeds/>
+					query4 := "MATCH (n:Speeds)-[r:HAS_SPEED]-(s) WHERE ID(n)={sid}  RETURN s" // grabs all <speed/> from the given <speeds/>
+					us := []UnmarshalledSpeeds{}
+					cq4 := neoism.CypherQuery{
+						Statement:  query4,
+						Parameters: neoism.Props{"sid": j.ID},
+						Result:     &us,
+					}
+					e := db.Cypher(&cq4)
+					_ = e
+					for _, k := range us {
+						ss := &Speed{} // <speed/>
+						ns.Speed = append(
+							ns.Speed,
+							*createElementFromNode(&k.Node, ss).(*Speed),
+						)
+					}
+					xia.Speeds = createElementFromNode(&j.Node, ns).(*Speeds)
+				case "TrainRadio":
+					tr := &TrainRadio{}
+					xia.TrainRadio = createElementFromNode(&j.Node, tr).(*TrainRadio)
+				case "TrainProtection":
+					tp := &TrainProtection{}
+					xia.TrainProtection = createElementFromNode(&j.Node, tp).(*TrainProtection)
+				}
+			}
+
+			xiag.InfraAttributes = append(
+				xiag.InfraAttributes,
+				*createElementFromNode(&ia.AttrGroup, xia).(*InfraAttributes),
+			)
+
+		}
+		xiags = append(xiags, xiag)
+	}
+	return xiags
 }
 
 // TRACK TOPOLOGIES
@@ -768,7 +990,7 @@ func createTrackEdge(lb string, xteg *TrackEdge, t UnmarshalledTrack) {
 
 // createConnection creates an XML connection node inside switch or crossing parent
 func createConnection(lb string, xc *Connections, t UnmarshalledTrack) {
-	nsc := &SwitchOrCrossing{XMLName: xml.Name{Local: "switch"}}
+	nsc := &SwitchOrCrossing{}
 	switch lb {
 	case "Switch":
 		nsc.XMLName = xml.Name{Local: "switch"}
