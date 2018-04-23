@@ -12,7 +12,7 @@ import (
 
 type GraphUtils struct{}
 
-func (g *GraphUtils) RailmlToGraph(t *etree.Element, db *neoism.Database, epsg string, ln *neoism.Node) string {
+func (g *GraphUtils) TrackToGraph(t *etree.Element, db *neoism.Database, epsg string, ln *neoism.Node) string {
 
 	elementsUtils := utils.ElementsUtils{}
 	// TRACK
@@ -79,5 +79,53 @@ func (g *GraphUtils) RailmlToGraph(t *etree.Element, db *neoism.Database, epsg s
 		}
 	}
 
+	return "ok"
+}
+
+func (g *GraphUtils) InfraAttributesToGraph(a *etree.Element, db *neoism.Database, ag *neoism.Node) string {
+	elementsUtils := utils.ElementsUtils{}
+
+	elements := a.SelectElements("infraAttributes")
+	if elements == nil {
+		return "no attributes"
+	}
+	for _, element := range elements {
+		ia := elementsUtils.GetInfraAttributes(element)
+		at, _ := db.CreateNode(neoism.Props{"id": ia.ID})
+		at.AddLabel("InfraAttributes")
+		ag.Relate("HAS_INFRA_ATTRS", at.Id(), neoism.Props{})
+
+		sa := reflect.ValueOf(&ia).Elem()
+		for i := 0; i < sa.NumField(); i++ {
+			name := sa.Type().Field(i).Name
+			if name == "ID" {
+				continue
+			}
+			if name == "Speeds" {
+				a := sa.Field(i).Interface().([]neoism.Props)
+				if len(a) == 0 {
+					continue
+				}
+				nss, _ := db.CreateNode(neoism.Props{})
+				nss.AddLabel(name)
+				at.Relate("INFRA_ATTR", nss.Id(), neoism.Props{})
+				for _, e := range a {
+					ns, _ := db.CreateNode(e)
+					ns.AddLabel("Speed")
+					nss.Relate("HAS_SPEED", ns.Id(), neoism.Props{})
+				}
+				continue
+			}
+
+			p := sa.Field(i).Interface().(neoism.Props)
+			if len(p) == 0 {
+				continue
+			}
+			a, _ := db.CreateNode(p)
+			a.AddLabel(name)
+			at.Relate("INFRA_ATTR", a.Id(), neoism.Props{})
+		}
+
+	}
 	return "ok"
 }

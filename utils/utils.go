@@ -75,6 +75,23 @@ type OCSElements struct {
 	TrainRadioChanges       []neoism.Props
 }
 
+// InfraAttributes structure represents complete <infraAttributes /> section.
+type InfraAttributes struct {
+	ID                string
+	AxleWeight        neoism.Props
+	Electrification   neoism.Props
+	EpsgCode          neoism.Props
+	Gauge             neoism.Props
+	ClearanceGauge    neoism.Props
+	OperationMode     neoism.Props
+	Owner             neoism.Props
+	PowerTransmission neoism.Props
+	Speeds            []neoism.Props
+	TrainRadio        neoism.Props
+	TrainProtection   neoism.Props
+	//GeneralInfraAttributes neoism.Props // TODO later
+}
+
 var wgs84, _ = proj.NewProj("+init=epsg:4326")
 
 // Converts <geoMapings /> section to the WKTLinestring.
@@ -332,4 +349,39 @@ func (eu *ElementsUtils) GetOCSElements(t *etree.Element, epsg string) OCSElemen
 	}
 
 	return oe
+}
+
+func (eu *ElementsUtils) GetInfraAttributes(element *etree.Element) InfraAttributes {
+	ia := InfraAttributes{
+		ID: element.SelectAttrValue("id", "Unknown"),
+	}
+
+	if element == nil {
+		return ia
+	}
+	for _, ag := range element.ChildElements() {
+		capitalized := strings.Title(ag.Tag)
+		if capitalized == "GeneralInfraAttributes" {
+			// nested as a fuckin hell,
+			// so for now it is skipped
+			continue
+		}
+		if capitalized == "Speeds" {
+			a := reflect.ValueOf(&ia).Elem().FieldByName(capitalized)
+			ae := []neoism.Props{}
+			for _, child := range ag.ChildElements() {
+				attr := extractAttributes(child)
+				ae = append(ae, attr)
+			}
+			v := reflect.ValueOf(ae)
+			a.Set(v)
+			continue
+		}
+		p := reflect.ValueOf(&ia).Elem().FieldByName(capitalized)
+		at := extractAttributes(ag)
+		va := reflect.ValueOf(at)
+		p.Set(va)
+
+	}
+	return ia
 }
