@@ -26,11 +26,11 @@ func (g *GraphUtils) TrackToGraph(t *etree.Element, db *neoism.Database, epsg st
 
 	tb, _ := db.CreateNode(tt.Begin.Properties)
 	tb.AddLabel(tt.Begin.Label)
-	tn.Relate("BEGINS", tb.Id(), neoism.Props{})
+	tn.Relate("BEGINS", tb.Id(), tt.Begin.Container)
 
 	te, _ := db.CreateNode(tt.End.Properties)
 	te.AddLabel(tt.End.Label)
-	tn.Relate("ENDS", te.Id(), neoism.Props{})
+	tn.Relate("ENDS", te.Id(), tt.End.Container)
 
 	for _, sw := range tt.Switch {
 		swn, _ := db.CreateNode(sw.Properties)

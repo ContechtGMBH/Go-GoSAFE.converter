@@ -598,59 +598,59 @@ type Tracks struct {
 
 type AxleWeight struct {
 	XMLName   xml.Name `xml:"axleWeight"`
-	Value     string   `xml:"value,attr"`
-	Meterload string   `xml:"meterload,attr"`
+	Value     string   `xml:"value,attr,omitempty"`
+	Meterload string   `xml:"meterload,attr,omitempty"`
 }
 
 type Electrification struct {
 	XMLName   xml.Name `xml:"electrification"`
-	Type      string   `xml:"type,attr"`
-	Voltage   string   `xml:"voltage,attr"`
-	Frequency string   `xml:"frequency,attr"`
+	Type      string   `xml:"type,attr,omitempty"`
+	Voltage   string   `xml:"voltage,attr,omitempty"`
+	Frequency string   `xml:"frequency,attr,omitempty"`
 }
 
 type EpsgCode struct {
 	XMLName     xml.Name `xml:"epsgCode"`
-	Default     string   `xml:"default,attr"`
-	ExtraHeight string   `xml:"extraHeight,attr"`
+	Default     string   `xml:"default,attr,omitempty"`
+	ExtraHeight string   `xml:"extraHeight,attr,omitempty"`
 }
 
 type Gauge struct {
 	XMLName xml.Name `xml:"gauge"`
-	Value   string   `xml:"value,attr"`
+	Value   string   `xml:"value,attr,omitempty"`
 }
 
 type ClearanceGauge struct {
 	XMLName xml.Name `xml:"clearanceGauge"`
-	Code    string   `xml:"code,attr"`
+	Code    string   `xml:"code,attr,omitempty"`
 }
 
 type OperationMode struct {
 	XMLName           xml.Name `xml:"operationMode"`
-	ModeLegislative   string   `xml:"modeLegislative,attr"`
-	ModeExecutive     string   `xml:"modeExecutive,attr"`
-	ClearanceManaging string   `xml:"clereanceManaging,attr"`
+	ModeLegislative   string   `xml:"modeLegislative,attr,omitempty"`
+	ModeExecutive     string   `xml:"modeExecutive,attr,omitempty"`
+	ClearanceManaging string   `xml:"clereanceManaging,attr,omitempty"`
 }
 
 type Owner struct {
 	XMLName                  xml.Name `xml:"owner"`
-	OwnerName                string   `xml:"ownerName,attr"`
-	InfrastructureManagerRef string   `xml:"infrastructureManagerRef,attr"`
+	OwnerName                string   `xml:"ownerName,attr,omitempty"`
+	InfrastructureManagerRef string   `xml:"infrastructureManagerRef,attr,omitempty"`
 }
 
 type PowerTransmission struct {
 	XMLName xml.Name `xml:"powerTransmission"`
-	Type    string   `xml:"type,attr"`
-	Style   string   `xml:"style,attr"`
+	Type    string   `xml:"type,attr,omitempty"`
+	Style   string   `xml:"style,attr,omitempty"`
 }
 
 type Speed struct {
 	XMLName           xml.Name `xml:"speed"`
-	TrainCategory     string   `xml:"trainCategory,attr"`
-	EtcsTrainCategory string   `xml:"etcsTrainCategory,attr"`
-	ProfileRef        string   `xml:"profileRef,attr"`
-	Status            string   `xml:"status,attr"`
-	VMax              string   `xml:"vMax,attr"`
+	TrainCategory     string   `xml:"trainCategory,attr,omitempty"`
+	EtcsTrainCategory string   `xml:"etcsTrainCategory,attr,omitempty"`
+	ProfileRef        string   `xml:"profileRef,attr,omitempty"`
+	Status            string   `xml:"status,attr,omitempty"`
+	VMax              string   `xml:"vMax,attr,omitempty"`
 }
 
 type Speeds struct {
@@ -660,19 +660,19 @@ type Speeds struct {
 
 type TrainRadio struct {
 	XMLName              xml.Name `xml:"trainRadio"`
-	RadioSystem          string   `xml:"radioSystem,attr"`
-	NetworkSelection     string   `xml:"networkSelection,attr"`
-	PublicEmergency      string   `xml:"publicEmergency,attr"`
-	BroadcastCalls       string   `xml:"broadcastCalls,attr"`
-	TextMessageService   string   `xml:"textMessageService,attr"`
-	DirectMode           string   `xml:"directMode,attr"`
-	PublicNetworkRoaming string   `xml:"publicNetworkRoaming,attr"`
+	RadioSystem          string   `xml:"radioSystem,attr,omitempty"`
+	NetworkSelection     string   `xml:"networkSelection,attr,omitempty"`
+	PublicEmergency      string   `xml:"publicEmergency,attr,omitempty"`
+	BroadcastCalls       string   `xml:"broadcastCalls,attr,omitempty"`
+	TextMessageService   string   `xml:"textMessageService,attr,omitempty"`
+	DirectMode           string   `xml:"directMode,attr,omitempty"`
+	PublicNetworkRoaming string   `xml:"publicNetworkRoaming,attr,omitempty"`
 }
 
 type TrainProtection struct {
 	XMLName    xml.Name `xml:"trainProtection"`
-	Medium     string   `xml:"medium,attr"`
-	Monitoring string   `xml:"monitoring,attr"`
+	Medium     string   `xml:"medium,attr,omitempty"`
+	Monitoring string   `xml:"monitoring,attr,omitempty"`
 }
 
 type InfraAttributes struct {
@@ -953,6 +953,19 @@ func ExportInfraAttrs(id string) []InfraAttrGroups {
 
 // TRACK TOPOLOGIES
 func createTrackEdge(lb string, xteg *TrackEdge, t UnmarshalledTrack) {
+	rel := t.Relationship.Data.(map[string]interface{})
+	if id := rel["id"]; id != nil {
+		xteg.Id = id.(string)
+	}
+	if pos := rel["pos"]; pos != nil {
+		xteg.Pos = pos.(string)
+	}
+	if apos := rel["absPos"]; apos != nil {
+		xteg.AbsPos = apos.(string)
+	}
+	if adir := rel["absDir"]; adir != nil {
+		xteg.AbsDir = adir.(string)
+	}
 	switch lb {
 	case "BufferStop":
 		nbs := &BufferStop{}

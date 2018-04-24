@@ -18,6 +18,7 @@ const Unknown = "unknown"
 type Edge struct {
 	Label      string
 	Properties neoism.Props
+	Container  neoism.Props
 }
 
 // Switch structure extracted from the <connections /> container
@@ -227,8 +228,8 @@ func (eu *ElementsUtils) GetTrackTopologies(t *etree.Element, epsg string) Track
 					te.Label = strings.Title(child.Tag)
 				}
 			}
-
 			te.Properties = props
+			te.Container = extractAttributes(topologies)
 
 			if topologies.Tag == "trackBegin" {
 				tt.Begin = te
