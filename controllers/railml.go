@@ -14,7 +14,7 @@ import (
 )
 
 /**
-* @api {POST} /api/v1/converter/railml
+* @api {POST} /api/v1/import/railml
 * @apiDescription Converts a RailML file to neo4j graph
 * @apiGroup Railml
 * @apiName ConvertRailml
@@ -23,7 +23,7 @@ import (
 * @apiParam {file} file A valid RailML file that contains the Infrastructure subschema
 * @apiSuccess (200) {json} object Response message with the number of extracted tracks
  */
-func ConvertRailml(c *gin.Context) {
+func ImportRailml(c *gin.Context) {
 
 	epsg := c.PostForm("epsg")
 	lineName := c.PostForm("line")

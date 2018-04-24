@@ -11,7 +11,7 @@ func NewRouter() *gin.Engine {
 
 	v1 := router.Group("api/v1")
 	{
-		v1.POST("/converter/railml", controllers.ConvertRailml)
+		v1.POST("/import/railml", controllers.ImportRailml)
 		v1.POST("/export/railml", controllers.ExportRailml)
 	}
 
