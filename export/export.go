@@ -740,7 +740,7 @@ func ExportLine(lineId string) interface{} {
 
 	ts := Tracks{}
 	for _, t := range tid {
-		v := ExportTrack(t.ID)
+		v := ExportTrack(t.ID, lineId)
 		ts.Tracks = append(ts.Tracks, v)
 
 	}
@@ -776,13 +776,13 @@ type UnmarshalledTrack struct {
 	Connection   neoism.Node         `json:"c"`
 }
 
-func ExportTrack(id string) Track {
+func ExportTrack(id string, line string) Track {
 	db := config.GetDBConnection()
-	query := "MATCH (t:Track {id:{trackId}})-[r:BEGINS|ENDS|HAS_TRACK_ELEMENT|HAS_OCS_ELEMENT|HAS_SWITCH|HAS_CROSSING]-(n)-[:HAS_CONNECTION*0..1]-(c) RETURN t,r,n,labels(n),c"
+	query := "MATCH (l:Line {id:{lineId}})-[]-(t:Track {id:{trackId}})-[r:BEGINS|ENDS|HAS_TRACK_ELEMENT|HAS_OCS_ELEMENT|HAS_SWITCH|HAS_CROSSING]-(n)-[:HAS_CONNECTION*0..1]-(c) RETURN t,r,n,labels(n),c"
 	track := []UnmarshalledTrack{}
 	cq := neoism.CypherQuery{
 		Statement:  query,
-		Parameters: neoism.Props{"trackId": id},
+		Parameters: neoism.Props{"trackId": id, "lineId": line},
 		Result:     &track,
 	}
 
@@ -818,14 +818,7 @@ func ExportTrack(id string) Track {
 	}
 	xtt := TrackTopology{TrackBegin: xtb, TrackEnd: xte, Connections: xc}
 	xt := Track{Id: id, TrackTopology: xtt, TrackElements: xtel, OcsElements: xoel}
-	/*
-		output, err := xml.MarshalIndent(xt, "  ", "    ")
-		if err != nil {
-			fmt.Printf("error: %v\n", err)
-		}
 
-		os.Stdout.Write(output)
-	*/
 	return xt
 }
 
@@ -883,11 +876,11 @@ func ExportInfraAttrs(id string) []InfraAttrGroups {
 			xia := &InfraAttributes{} // <infraAttributes/>
 
 			iaid := ia.AttrGroup.Data["id"]
-			query3 := "MATCH (a:InfraAttributes {id:{iaid}})-[r:INFRA_ATTR]-(n)  RETURN n, ID(n), labels(n)" // get all groups from the given <infraAttributes/>
+			query3 := "MATCH (g:InfraAttrGroup)-[]-(a:InfraAttributes {id:{iaid}})-[r:INFRA_ATTR]-(n) WHERE ID(g)={groupId}  RETURN n, ID(n), labels(n)" // get all groups from the given <infraAttributes/>
 			uag := []UnmarshalledAttrsGroup{}
 			cq3 := neoism.CypherQuery{
 				Statement:  query3,
-				Parameters: neoism.Props{"iaid": iaid},
+				Parameters: neoism.Props{"iaid": iaid, "groupId": i.ID},
 				Result:     &uag,
 			}
 			e := db.Cypher(&cq3)
